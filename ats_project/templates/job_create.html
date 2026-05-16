@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+
+{% block title %}Post a New Job - ATS Lite{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-briefcase"></i> Post a New Job
+                    </h3>
+                </div>
+                <div class="card-body">
+                    {% if error %}
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-circle"></i> {{ error }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endif %}
+                    
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        <!-- Job Title -->
+                        <div class="mb-3">
+                            <label for="title" class="form-label">
+                                <strong>Job Title</strong>
+                                <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="title" name="title" 
+                                   placeholder="e.g., Senior Python Developer" 
+                                   value="{{ form_data.title }}" required>
+                            <small class="text-muted">The position title for this job posting</small>
+                        </div>
+                        
+                        <!-- Description -->
+                        <div class="mb-3">
+                            <label for="description" class="form-label">
+                                <strong>Job Description</strong>
+                                <span class="text-danger">*</span>
+                            </label>
+                            <textarea class="form-control" id="description" name="description" rows="5"
+                                      placeholder="Describe the job responsibilities, requirements, and what you're looking for..."
+                                      required>{{ form_data.description }}</textarea>
+                            <small class="text-muted">Detailed description of the position</small>
+                        </div>
+                        
+                        <!-- Required Skills -->
+                        <div class="mb-3">
+                            <label for="required_skills" class="form-label">
+                                <strong>Required Skills</strong>
+                                <span class="text-danger">*</span>
+                            </label>
+                            <textarea class="form-control" id="required_skills" name="required_skills" rows="3"
+                                      placeholder="python, django, rest_api, postgresql"
+                                      required>{{ form_data.required_skills }}</textarea>
+                            <small class="text-muted">Comma-separated list of required skills</small>
+                        </div>
+                        
+                        <!-- Location -->
+                        <div class="mb-3">
+                            <label for="location" class="form-label">Location</label>
+                            <input type="text" class="form-control" id="location" name="location"
+                                   placeholder="e.g., New York, NY or Remote"
+                                   value="{{ form_data.location }}">
+                        </div>
+                        
+                        <!-- Salary Range -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="salary_min" class="form-label">Minimum Salary</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control" id="salary_min" name="salary_min"
+                                           placeholder="100000" value="{{ form_data.salary_min }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="salary_max" class="form-label">Maximum Salary</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control" id="salary_max" name="salary_max"
+                                           placeholder="150000" value="{{ form_data.salary_max }}">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Experience Level -->
+                        <div class="mb-3">
+                            <label for="experience_level" class="form-label">Experience Level</label>
+                            <select class="form-select" id="experience_level" name="experience_level">
+                                <option value="junior" {% if form_data.experience_level == 'junior' %}selected{% endif %}>Junior (0-2 years)</option>
+                                <option value="mid" {% if form_data.experience_level == 'mid' or not form_data.experience_level %}selected{% endif %}>Mid Level (2-5 years)</option>
+                                <option value="senior" {% if form_data.experience_level == 'senior' %}selected{% endif %}>Senior (5+ years)</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Job Type -->
+                        <div class="mb-3">
+                            <label for="job_type" class="form-label">Employment Type</label>
+                            <select class="form-select" id="job_type" name="job_type">
+                                <option value="full-time" {% if form_data.job_type == 'full-time' or not form_data.job_type %}selected{% endif %}>Full-Time</option>
+                                <option value="part-time" {% if form_data.job_type == 'part-time' %}selected{% endif %}>Part-Time</option>
+                                <option value="contract" {% if form_data.job_type == 'contract' %}selected{% endif %}>Contract</option>
+                                <option value="freelance" {% if form_data.job_type == 'freelance' %}selected{% endif %}>Freelance</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Form Actions -->
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="/jobs/" class="btn btn-secondary btn-lg">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save"></i> Post Job
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Help Text -->
+            <div class="alert alert-info mt-4">
+                <h5 class="alert-heading">
+                    <i class="fas fa-info-circle"></i> Tips for a Great Job Posting
+                </h5>
+                <ul class="mb-0">
+                    <li>Be clear and specific about the role and responsibilities</li>
+                    <li>List must-have and nice-to-have skills separately</li>
+                    <li>Provide a realistic salary range to attract qualified candidates</li>
+                    <li>Include information about company culture and benefits</li>
+                    <li>Proofread before posting</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-label strong {
+    color: #0052cc;
+}
+
+.text-danger {
+    font-weight: bold;
+}
+
+textarea.form-control {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    resize: vertical;
+}
+</style>
+{% endblock %}

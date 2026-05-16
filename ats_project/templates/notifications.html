@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block title %}Notifications - ATS Lite{% endblock %}
+
+{% block content %}
+<h2 class="mb-4" style="color: #0052cc; font-weight: 700;">
+    <i class="fas fa-bell"></i> Notifications
+</h2>
+
+<div class="row mb-3">
+    <div class="col">
+        <button class="btn btn-sm btn-outline-primary" id="mark-all-btn">
+            <i class="fas fa-check-double"></i> Mark All as Read
+        </button>
+    </div>
+    <div class="col-auto">
+        <span class="badge bg-danger" id="unread-count">0</span> Unread
+    </div>
+</div>
+
+<div id="notifications-container">
+    <!-- Notifications will be loaded here -->
+</div>
+
+<script>
+    // Load notifications
+    function loadNotifications() {
+        fetch('/api/notifications/')
+            .then(response => response.json())
+            .then(data => {
+                const container = document.getElementById('notifications-container');
+                
+                if (data.results && data.results.length > 0) {
+                    container.innerHTML = data.results.map(notif => `
+                        <div class="card mb-2 notification-item ${notif.is_read ? '' : 'border-primary'}">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col">
+                                        <h6 class="card-title">${notif.title}</h6>
+                                        <p class="card-text">${notif.message}</p>
+                                        <small class="text-muted">
+                                            ${new Date(notif.created_at).toLocaleDateString()} ${new Date(notif.created_at).toLocaleTimeString()}
+                                        </small>
+                                    </div>
+                                    <div class="col-auto">
+                                        <button class="btn btn-sm btn-outline-secondary mark-read" data-id="${notif.id}">
+                                            ${notif.is_read ? '<i class="fas fa-envelope-open"></i> Mark Unread' : '<i class="fas fa-envelope"></i> Mark Read'}
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger delete-notif" data-id="${notif.id}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                    
+                    // Add event listeners
+                    document.querySelectorAll('.mark-read').forEach(btn => {
+                        btn.addEventListener('click', toggleNotification);
+                    });
+                    document.querySelectorAll('.delete-notif').forEach(btn => {
+                        btn.addEventListener('click', deleteNotification);
+                    });
+                } else {
+                    container.innerHTML = '<div class="alert alert-info">No notifications</div>';
+                }
+                updateUnreadCount();
+            });
+    }
+
+    function toggleNotification(e) {
+        const id = e.target.closest('button').dataset.id;
+        const endpoint = this.textContent.includes('Mark Read') ? 'mark_as_read' : 'mark_as_unread';
+        
+        fetch(`/api/notifications/${id}/${endpoint}/`, { method: 'POST' })
+            .then(() => loadNotifications());
+    }
+
+    function deleteNotification(e) {
+        const id = e.target.closest('button').dataset.id;
+        if (confirm('Delete this notification?')) {
+            fetch(`/api/notifications/${id}/`, { method: 'DELETE' })
+                .then(() => loadNotifications());
+        }
+    }
+
+    function updateUnreadCount() {
+        fetch('/api/notifications/unread_count/')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('unread-count').textContent = data.unread_count;
+            });
+    }
+
+    document.getElementById('mark-all-btn').addEventListener('click', () => {
+        fetch('/api/notifications/mark_all_as_read/', { method: 'POST' })
+            .then(() => loadNotifications());
+    });
+
+    // Initial load
+    loadNotifications();
+
+    // Refresh every 30 seconds
+    setInterval(loadNotifications, 30000);
+</script>
+{% endblock %}

@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin - All Applications - ATS Lite{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4" style="color: #0052cc; font-weight: 700;">
+        <i class="fas fa-file-alt"></i> All Applications (Admin Only)
+    </h2>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="get" id="filter-form">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <input type="text" class="form-control" name="search" placeholder="Search by name, email, or job..." value="{{ search }}">
+                            </div>
+                            <div class="col-md-2 mb-3">
+                                <select class="form-select" name="status">
+                                    <option value="">All Statuses</option>
+                                    {% for value, label in status_choices %}
+                                        <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-2 mb-3">
+                                <input type="number" class="form-control" name="min_score" min="0" max="100" placeholder="Min %" value="{{ min_score }}">
+                            </div>
+                            <div class="col-md-2 mb-3">
+                                <input type="number" class="form-control" name="max_score" min="0" max="100" placeholder="Max %" value="{{ max_score }}">
+                            </div>
+                            <div class="col-md-2 mb-3">
+                                <button type="submit" class="btn btn-primary w-100">Filter</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Applications Table -->
+    {% if applications %}
+        <div class="table-responsive">
+            <table class="table table-hover table-sm">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Candidate</th>
+                        <th>Email</th>
+                        <th>Job</th>
+                        <th>Company</th>
+                        <th>Score</th>
+                        <th>Status</th>
+                        <th>Applied</th>
+                        <th>Downloads</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for app in applications %}
+                        <tr>
+                            <td>
+                                <strong>#{{ app.id }}</strong>
+                            </td>
+                            <td>
+                                {{ app.candidate.user.get_full_name|default:app.candidate.user.username }}
+                            </td>
+                            <td>
+                                <small>{{ app.candidate.user.email }}</small>
+                            </td>
+                            <td>
+                                <strong>{{ app.job.title }}</strong>
+                            </td>
+                            <td>
+                                <small>{{ app.job.company.user.username }}</small>
+                            </td>
+                            <td>
+                                {% if app.skill_match_score >= 75 %}
+                                    <span class="badge bg-success">{{ app.skill_match_score }}%</span>
+                                {% elif app.skill_match_score >= 50 %}
+                                    <span class="badge bg-warning">{{ app.skill_match_score }}%</span>
+                                {% else %}
+                                    <span class="badge bg-danger">{{ app.skill_match_score }}%</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if app.status == 'pending' %}
+                                    <span class="badge bg-secondary">{{ app.get_status_display }}</span>
+                                {% elif app.status == 'reviewed' %}
+                                    <span class="badge bg-info">{{ app.get_status_display }}</span>
+                                {% elif app.status == 'shortlisted' %}
+                                    <span class="badge bg-primary">{{ app.get_status_display }}</span>
+                                {% elif app.status == 'accepted' %}
+                                    <span class="badge bg-success">{{ app.get_status_display }}</span>
+                                {% elif app.status == 'rejected' %}
+                                    <span class="badge bg-danger">{{ app.get_status_display }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <small class="text-muted">{{ app.applied_at|date:"M d, Y" }}</small>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    {% if app.application_excel %}
+                                        <a href="{{ app.application_excel.url }}" class="btn btn-outline-success" title="Download Excel Details" download>
+                                            <i class="fas fa-file-excel"></i> Excel
+                                        </a>
+                                    {% endif %}
+                                    {% if app.resume %}
+                                        <a href="{{ app.resume.url }}" class="btn btn-outline-danger" title="Download Resume PDF" download>
+                                            <i class="fas fa-file-pdf"></i> PDF
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% if search %}&search={{ search }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if min_score %}&min_score={{ min_score }}{% endif %}{% if max_score %}&max_score={{ max_score }}{% endif %}">First</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if min_score %}&min_score={{ min_score }}{% endif %}{% if max_score %}&max_score={{ max_score }}{% endif %}">Previous</a>
+                        </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                        {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if min_score %}&min_score={{ min_score }}{% endif %}{% if max_score %}&max_score={{ max_score }}{% endif %}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if min_score %}&min_score={{ min_score }}{% endif %}{% if max_score %}&max_score={{ max_score }}{% endif %}">Next</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search %}&search={{ search }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if min_score %}&min_score={{ min_score }}{% endif %}{% if max_score %}&max_score={{ max_score }}{% endif %}">Last</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+
+    {% else %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> No applications found. Try adjusting your filters.
+        </div>
+    {% endif %}
+
+    <!-- Info Card -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="fas fa-info-circle"></i> Admin Information</h6>
+                    <p class="card-text mb-0">
+                        <strong>Excel Files:</strong> Automatically generated when candidates submit applications. Contains all application details, candidate info, job requirements, and skill match scores.
+                    </p>
+                    <p class="card-text mb-0">
+                        <strong>PDF Files:</strong> Resume documents uploaded by candidates during application submission.
+                    </p>
+                    <p class="card-text mb-0">
+                        <strong>Total Applications:</strong> {{ page_obj.paginator.count }}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.skill-match {
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+.skill-match.high {
+    background-color: #d4edda;
+    color: #155724;
+}
+.skill-match.medium {
+    background-color: #fff3cd;
+    color: #856404;
+}
+.skill-match.low {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+</style>
+
+{% endblock %}
